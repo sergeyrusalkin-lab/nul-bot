@@ -1,12 +1,18 @@
+import asyncio
+import logging
 import re
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
 
+# Вставте сюди ваш токен Telegram-бота
+TOKEN = "ТУТ_ВАШ_ТОКЕН_БОТА"
+
+# Клас первинної векторної матриці (без додаткової логіки)
 class NULPrimaryVectorIsolator:
     def __init__(self, text: str):
-        self.raw_text = text
-        # Очищення: залишаємо кирилицю, латиницю та цифри, переводимо у верхній регістр
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9]', '', text.upper())
         
-        # === КИРИЛИЧНА МАТРИЦЯ (R1: Петлі, R2: Каркас, R3: Розриви-шлюзи) ===
+        # Кирилична матриця
         self.CYRILLIC_MATRIX = {
             'А': (0, 3, 2), 'Б': (1, 1, 1), 'В': (2, 2, 0), 'Г': (0, 2, 2),
             'Ґ': (0, 2, 4), 'Д': (0, 3, 4), 'Е': (0, 4, 3), 'Є': (1, 0, 3),
@@ -19,7 +25,7 @@ class NULPrimaryVectorIsolator:
             'Я': (1, 2, 2)
         }
         
-        # === ЛАТИНСЬКА МАТРИЦЯ ===
+        # Латинська матриця
         self.LATIN_MATRIX = {
             'A': (0, 3, 2), 'B': (2, 1, 2), 'C': (1, 0, 1), 'D': (1, 1, 1),
             'E': (0, 4, 3), 'F': (0, 3, 3), 'G': (1, 1, 1), 'H': (0, 3, 4),
@@ -30,46 +36,61 @@ class NULPrimaryVectorIsolator:
             'Y': (0, 2, 1), 'Z': (0, 3, 2)
         }
 
-        # === МАТРИЦЯ ЦИФР ===
+        # Цифри
         self.DIGITS_MATRIX = {
             '0': (1, 0, 0), '8': (2, 0, 0), '1': (0, 0, 2), '4': (0, 4, 1)
         }
 
     def extract_primary_vectors(self):
-        """Витягує первинний вектор (R1, R2, R3) для кожного окремого символу."""
         breakdown = []
-
         for char in self.clean_text:
             if char in self.CYRILLIC_MATRIX:
-                alphabet = "CYRILLIC"
                 vector = self.CYRILLIC_MATRIX[char]
             elif char in self.LATIN_MATRIX:
-                alphabet = "LATIN"
                 vector = self.LATIN_MATRIX[char]
             elif char in self.DIGITS_MATRIX:
-                alphabet = "DIGIT"
                 vector = self.DIGITS_MATRIX[char]
             else:
-                alphabet = "UNKNOWN"
                 vector = (0, 0, 1)
+            breakdown.append({"char": char, "vector": vector})
+        return self.clean_text, breakdown
 
-            breakdown.append({
-                "char": char,
-                "alphabet": alphabet,
-                "vector_R1_R2_R3": vector
-            })
+# Ініціалізація бота
+dp = Dispatcher()
 
-        return {
-            "source_text": self.clean_text,
-            "character_vectors": breakdown
-        }
+@dp.message(Command("start"))
+class CommandStart:
+    pass
 
-# --- Тест первинного виділення ---
-if __name__ == "__main__":
-    isolator = NULPrimaryVectorIsolator("АБСОЛЮТ")
-    result = isolator.extract_primary_vectors()
+async def start_handler(message: types.Message):
+    await message.answer("Вітаю! Надішліть слово або текст, і я розкладу його на первинні вектори (R1, R2, R3).")
+
+@dp.message()
+async def message_handler(message: types.Message):
+    if not message.text:
+        return
+        
+    isolator = NULPrimaryVectorIsolator(message.text)
+    clean_text, breakdown = isolator.extract_primary_vectors()
     
-    print(f"Очищений текст: {result['source_text']}")
-    print("Первинні вектори символів:")
-    for item in result['character_vectors']:
-        print(f"  [{item['alphabet']}] Символ '{item['char']}' -> Вектор (R1, R2, R3): {item['vector_R1_R2_R3']}")
+    if not clean_text:
+        await message.answer("Текст не містить розпізнаних символів (кирилиця/латиниця).")
+        return
+        
+    response = f"Очищений текст: {clean_text}\nПервинні вектори:\n"
+    for item in breakdown:
+        response += f"'{item['char']}' -> {item['vector']}\n"
+        
+    await message.answer(response)
+
+async def main():
+    bot = Bot(token=TOKEN)
+    dp.message.register(start_handler, Command("start"))
+    dp.message.register(message_handler)
+    
+    print("Бот запущено і готовий до роботи...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())
