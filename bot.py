@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiohttp import web
@@ -9,7 +10,6 @@ TOKEN = os.getenv("BOT_TOKEN")
 
 class NULPrimaryVectorIsolator:
     def __init__(self, text: str):
-        import re
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9]', '', text.upper())
         self.CYRILLIC_MATRIX = {
             'А': (0, 3, 2), 'Б': (1, 1, 1), 'В': (2, 2, 0), 'Г': (0, 2, 2),
@@ -37,6 +37,8 @@ class NULPrimaryVectorIsolator:
 
     def extract_primary_vectors(self):
         breakdown = []
+        total_r1, total_r2, total_r3 = 0, 0, 0
+
         for char in self.clean_text:
             if char in self.CYRILLIC_MATRIX:
                 vector = self.CYRILLIC_MATRIX[char]
@@ -46,28 +48,72 @@ class NULPrimaryVectorIsolator:
                 vector = self.DIGITS_MATRIX[char]
             else:
                 vector = (0, 0, 1)
+            
+            r1, r2, r3 = vector
+            total_r1 += r1
+            total_r2 += r2
+            total_r3 += r3
+            
             breakdown.append({"char": char, "vector": vector})
-        return self.clean_text, breakdown
+
+        total_sum = total_r1 + total_r2 + total_r3
+        
+        if total_sum > 0:
+            pct_r1 = round((total_r1 / total_sum) * 100, 1)
+            pct_r2 = round((total_r2 / total_sum) * 100, 1)
+            pct_r3 = round((total_r3 / total_sum) * 100, 1)
+        else:
+            pct_r1 = pct_r2 = pct_r3 = 0.0
+
+        # Коефіцієнт шлюзів (R3 / R1)
+        k_exchange = round(total_r3 / (total_r1 + 1), 2)
+
+        summary = {
+            "total_vector": (total_r1, total_r2, total_r3),
+            "percentages": (pct_r1, pct_r2, pct_r3),
+            "k_exchange": k_exchange
+        }
+
+        return self.clean_text, breakdown, summary
 
 dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
-    await message.answer("Вітаю! Надішліть слово або текст, і я розкладу його на первинні вектори (R1, R2, R3).")
+    await message.answer("Вітаю! Надішліть текст для розкладу на тривимірну матрицю вектора (R1, R2, R3).")
 
 @dp.message()
 async def message_handler(message: types.Message):
     if not message.text:
         return
+
     isolator = NULPrimaryVectorIsolator(message.text)
-    clean_text, breakdown = isolator.extract_primary_vectors()
+    clean_text, breakdown, summary = isolator.extract_primary_vectors()
+
     if not clean_text:
         await message.answer("Текст не містить розпізнаних символів.")
         return
-    response = f"Очищений текст: {clean_text}\nПервинні вектори:\n"
+
+    response = f"**Очищений текст:** {clean_text}\n\n**Політерні вектори:**\n"
     for item in breakdown:
         response += f"'{item['char']}' -> {item['vector']}\n"
-    await message.answer(response)
+
+    r1_sum, r2_sum, r3_sum = summary['total_vector']
+    p1, p2, p3 = summary['percentages']
+    k_ex = summary['k_exchange']
+
+    # Виправлена логіка станів згідно з принципом Абсолюту
+    if k_ex > 1.0:
+        state_desc = "Відкритий контур (вимагає вкладання зовнішнього сенсу для замикання)"
+    else:
+        state_desc = "Герметичний контур (самодостатній, не потребує доповнень)"
+
+    response += f"\n--- **СУКУПНЕ ПОЛЕ СИСТЕМИ** ---\n"
+    response += f"**Сумарний вектор:** R1={r1_sum}, R2={r2_sum}, R3={r3_sum}\n"
+    response += f"**Профіль:** R1={p1}%, R2={p2}%, R3={p3}%\n"
+    response += f"**Коефіцієнт шлюзів (K):** {k_ex} [{state_desc}]"
+
+    await message.answer(response, parse_mode="Markdown")
 
 async def handle(request):
     return web.Response(text="NUL Bot is active and running!")
