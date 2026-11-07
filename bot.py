@@ -39,7 +39,7 @@ class NULPrimaryVectorIsolator:
         breakdown = []
         for char in self.clean_text:
             if char in self.CYRILLIC_MATRIX:
-                vector = self.CYRI_MATRIX = self.CYRILLIC_MATRIX[char]
+                vector = self.CYRILLIC_MATRIX[char]
             elif char in self.LATIN_MATRIX:
                 vector = self.LATIN_MATRIX[char]
             elif char in self.DIGITS_MATRIX:
@@ -51,28 +51,24 @@ class NULPrimaryVectorIsolator:
 
 dp = Dispatcher()
 
+@dp.message(Command("start"))
+async def start_handler(message: types.Message):
+    await message.answer("Вітаю! Надішліть слово або текст, і я розкладу його на первинні вектори (R1, R2, R3).")
+
+@dp.message()
 async def message_handler(message: types.Message):
-    # Отримуємо текст звичайного повідомлення або підпису до зображення/файлу
-    text = message.text or message.caption
-    
-    if not text:
-        await message.answer("Це повідомлення не містить тексту або підпису для векторного аналізу.")
+    if not message.text:
         return
-        
-    isolator = NULPrimaryVectorIsolator(text)
+    isolator = NULPrimaryVectorIsolator(message.text)
     clean_text, breakdown = isolator.extract_primary_vectors()
-    
     if not clean_text:
-        await message.answer("Текст не містить розпізнаних символів (кирилиця/латиниця).")
+        await message.answer("Текст не містить розпізнаних символів.")
         return
-        
     response = f"Очищений текст: {clean_text}\nПервинні вектори:\n"
     for item in breakdown:
         response += f"'{item['char']}' -> {item['vector']}\n"
-        
     await message.answer(response)
 
-# Вебсервер для відповідей на HTTP-пінги Render та UptimeRobot
 async def handle(request):
     return web.Response(text="NUL Bot is active and running!")
 
