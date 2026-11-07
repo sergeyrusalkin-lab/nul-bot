@@ -5,7 +5,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 
 # Вставте сюди ваш токен Telegram-бота
-TOKEN = "ТУТ_ВАШ_ТОКЕН_БОТА"
+import os
+TOKEN = os.getenv("BOT_TOKEN")
 
 # Клас первинної векторної матриці
 class NULPrimaryVectorIsolator:
