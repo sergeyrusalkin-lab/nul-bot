@@ -7,7 +7,7 @@ from aiogram.filters import Command
 # Вставте сюди ваш токен Telegram-бота
 TOKEN = "ТУТ_ВАШ_ТОКЕН_БОТА"
 
-# Клас первинної векторної матриці (без додаткової логіки)
+# Клас первинної векторної матриці
 class NULPrimaryVectorIsolator:
     def __init__(self, text: str):
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9]', '', text.upper())
@@ -55,13 +55,11 @@ class NULPrimaryVectorIsolator:
             breakdown.append({"char": char, "vector": vector})
         return self.clean_text, breakdown
 
-# Ініціалізація бота
+# Ініціалізація диспетчера
 dp = Dispatcher()
 
+# Правильні декоратори для обробників у aiogram 3.x
 @dp.message(Command("start"))
-class CommandStart:
-    pass
-
 async def start_handler(message: types.Message):
     await message.answer("Вітаю! Надішліть слово або текст, і я розкладу його на первинні вектори (R1, R2, R3).")
 
@@ -85,9 +83,6 @@ async def message_handler(message: types.Message):
 
 async def main():
     bot = Bot(token=TOKEN)
-    dp.message.register(start_handler, Command("start"))
-    dp.message.register(message_handler)
-    
     print("Бот запущено і готовий до роботи...")
     await dp.start_polling(bot)
 
