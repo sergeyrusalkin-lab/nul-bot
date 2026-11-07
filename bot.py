@@ -52,7 +52,7 @@ class NULSystemAnalyzer:
             elif char in self.DIGITS_MATRIX:
                 vector = self.DIGITS_MATRIX[char]
             else:
-                vector = (0, 0, 1) # Fallback для непередбачуваних символів
+                vector = (0, 0, 1) # Fallback
             
             total_r1 += vector[0]
             total_r2 += vector[1]
@@ -82,7 +82,7 @@ dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
-    await message.answer("Вітаю! NUL Analytical Bot активовано. Надішліть текст або план для системного енергетичного аналізу.")
+    await message.answer("Вітаю! NUL Analytical Bot активовано. Надішліть текст або план для аналізу шарів R.")
 
 @dp.message()
 async def message_handler(message: types.Message):
@@ -106,8 +106,8 @@ async def message_handler(message: types.Message):
     else:
         state_desc = "Герметичний контур / Самодостатня структура"
 
-    # Узагальнений вивід результату без зайвого сміття
-    response = f"⚡ **АНАЛІЗ СИСТЕМИ NUL** ⚡\n\n"
+    # Виключно зведена інформація по шарах R
+    response = f"⚡ **АНАЛІЗ ШАРІВ NUL** ⚡\n\n"
     response += f"📊 **Опрацьовано знаків:** {summary['total_chars']}\n\n"
     response += f"--- **СУКУПНЕ ПОЛЕ СИСТЕМИ** ---\n"
     response += f"• **Сумарний вектор (R1, R2, R3):** ({r1_sum}, {r2_sum}, {r3_sum})\n"
@@ -136,4 +136,6 @@ async def main():
     print("Бот запущено і готовий до роботи...")
     await dp.start_polling(bot)
 
-if __name__ == "__
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())
