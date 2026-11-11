@@ -115,12 +115,17 @@ async def message_handler(message: types.Message):
     r5_c = summary['r5_compensation']
     r1_imp = summary['r1_impact']
 
-    if r1_imp > 2.5:
+    # Адаптивна матриця визначення статусу на основі мнимого оператора (i), напруги (R5) та впливу (r1_imp)
+    if r1_imp > 100 and i_s > 0.9 and r5_compensation > 0.2:
         status = "Живий трансцендентний вихор / Висока провідність істини"
-    elif r1_imp >= 1.0:
+    elif r1_imp >= 50 and i_s > 0.85:
+        status = "Динамічний інформаційний потік / Спрямована напруга"
+    elif r1_imp >= 20 and k_ex >= 0.7:
         status = "Відігранований кристал / Ідеальний баланс каркаса та шлюзів"
-    else:
+    elif sq_sum > (s_sum + o_sum + v_sum) * 1.5 or r1_imp < 15:
         status = "Мертвий ентропійний шар / Залізобетонна догма"
+    else:
+        status = "Статична буферна зона / Перехідний стан"
 
     # Формуємо звичайний текст без ризику помилок парсерa Markdown
     response = "[ СПЕКТРАЛЬНИЙ АНАЛІЗ NUL ]\n\n"
