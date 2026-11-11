@@ -14,32 +14,33 @@ class NULAbsoluteAnalyzer:
         self.raw_text = text.upper()
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9\s]', '', self.raw_text)
         
+        # Топологічна матриця НУЛ: (Сфера/R1_контур, Розірваний шлюз, Ортогональний каркас R2, Векторний прорив R3)
         self.CYRILLIC_MATRIX = {
-            'А': (0, 3, 2), 'Б': (1, 1, 1), 'В': (2, 2, 0), 'Г': (0, 2, 2),
-            'Ґ': (0, 2, 4), 'Д': (0, 3, 4), 'Е': (0, 4, 3), 'Є': (1, 0, 3),
-            'Ж': (0, 0, 6), 'З': (0, 2, 2), 'И': (0, 3, 2), 'І': (0, 0, 2),
-            'Ї': (0, 0, 4), 'Й': (0, 1, 4), 'К': (0, 3, 4), 'Л': (0, 3, 2),
-            'М': (0, 4, 2), 'Н': (0, 3, 4), 'О': (1, 0, 0), 'П': (0, 3, 2),
-            'Р': (1, 1, 1), 'С': (1, 0, 1), 'Т': (0, 2, 3), 'У': (0, 2, 2),
-            'Ф': (1, 2, 2), 'Х': (0, 4, 4), 'Ц': (0, 4, 3), 'Ч': (0, 3, 3),
-            'Ш': (0, 4, 2), 'Щ': (0, 4, 3), 'Ь': (1, 1, 1), 'Ю': (1, 3, 2),
-            'Я': (1, 2, 2)
+            'А': (0, 0, 1, 3), 'Б': (1, 1, 1, 1), 'В': (2, 0, 2, 0), 'Г': (0, 0, 2, 1),
+            'Ґ': (0, 0, 2, 2), 'Д': (0, 0, 3, 2), 'Е': (0, 0, 4, 2), 'Є': (1, 1, 1, 1),
+            'Ж': (0, 0, 0, 6), 'З': (0, 2, 0, 1), 'И': (0, 0, 2, 3), 'І': (0, 0, 2, 0),
+            'Ї': (0, 0, 2, 2), 'Й': (0, 0, 3, 2), 'К': (0, 0, 3, 3), 'Л': (0, 0, 3, 1),
+            'М': (0, 0, 2, 4), 'Н': (0, 0, 4, 1), 'О': (1, 0, 0, 0), 'П': (0, 0, 3, 1),
+            'Р': (1, 1, 1, 0), 'С': (1, 1, 0, 0), 'Т': (0, 0, 3, 1), 'У': (0, 0, 1, 3),
+            'Ф': (1, 0, 2, 2), 'Х': (0, 0, 2, 4), 'Ц': (0, 0, 4, 2), 'Ч': (0, 0, 3, 2),
+            'Ш': (0, 0, 4, 2), 'Щ': (0, 0, 4, 3), 'Ь': (1, 1, 1, 0), 'Ю': (1, 0, 2, 2),
+            'Я': (1, 0, 2, 1)
         }
         self.LATIN_MATRIX = {
-            'A': (0, 3, 2), 'B': (2, 1, 2), 'C': (1, 0, 1), 'D': (1, 1, 1),
-            'E': (0, 4, 3), 'F': (0, 3, 3), 'G': (1, 1, 1), 'H': (0, 3, 4),
-            'I': (0, 0, 2), 'J': (0, 1, 1), 'K': (0, 3, 4), 'L': (0, 2, 2),
-            'M': (0, 4, 2), 'N': (0, 3, 2), 'O': (1, 0, 0), 'P': (1, 1, 1),
-            'Q': (1, 0, 1), 'R': (1, 1, 1), 'S': (1, 0, 1), 'T': (0, 2, 2),
-            'U': (0, 2, 2), 'V': (0, 2, 0), 'W': (0, 4, 0), 'X': (0, 4, 4),
-            'Y': (0, 2, 1), 'Z': (0, 3, 2)
+            'A': (0, 0, 1, 3), 'B': (2, 1, 1, 1), 'C': (1, 1, 0, 0), 'D': (1, 1, 1, 0),
+            'E': (0, 0, 4, 2), 'F': (0, 0, 3, 2), 'G': (1, 1, 1, 0), 'H': (0, 0, 4, 1),
+            'I': (0, 0, 2, 0), 'J': (0, 1, 1, 0), 'K': (0, 0, 3, 3), 'L': (0, 0, 2, 1),
+            'M': (0, 0, 2, 4), 'N': (0, 0, 3, 2), 'O': (1, 0, 0, 0), 'P': (1, 1, 1, 0),
+            'Q': (1, 1, 0, 0), 'R': (1, 1, 1, 0), 'S': (1, 1, 0, 0), 'T': (0, 0, 2, 1),
+            'U': (0, 2, 0, 1), 'V': (0, 0, 0, 3), 'W': (0, 0, 0, 5), 'X': (0, 0, 0, 4),
+            'Y': (0, 0, 1, 2), 'Z': (0, 0, 3, 2)
         }
         self.DIGITS_MATRIX = {
-            '0': (1, 0, 0), '8': (2, 0, 0), '1': (0, 0, 2), '4': (0, 4, 1)
+            '0': (1, 0, 0, 0), '8': (2, 0, 0, 0), '1': (0, 0, 2, 0), '4': (0, 0, 2, 2)
         }
 
     def compute_field(self):
-        total_r1, total_r2, total_r3 = 0, 0, 0
+        t_sphere, t_open, t_square, t_vector = 0, 0, 0, 0
         alpha_chars_count = 0
 
         for char in self.clean_text:
@@ -47,58 +48,63 @@ class NULAbsoluteAnalyzer:
                 continue
             
             if char in self.CYRILLIC_MATRIX:
-                vector = self.CYRILLIC_MATRIX[char]
+                vec = self.CYRILLIC_MATRIX[char]
             elif char in self.LATIN_MATRIX:
-                vector = self.LATIN_MATRIX[char]
+                vec = self.LATIN_MATRIX[char]
             elif char in self.DIGITS_MATRIX:
-                vector = self.DIGITS_MATRIX[char]
+                vec = self.DIGITS_MATRIX[char]
             else:
-                vector = (0, 0, 1)
+                vec = (0, 0, 1, 1)
             
-            total_r1 += vector[0]
-            total_r2 += vector[1]
-            total_r3 += vector[2]
+            t_sphere += vec[0]
+            t_open += vec[1]
+            t_square += vec[2]
+            t_vector += vec[3]
             alpha_chars_count += 1
 
-        total_sum = total_r1 + total_r2 + total_r3
+        total_sum = t_sphere + t_open + t_square + t_vector
         
         if total_sum > 0:
-            pct_r1 = round((total_r1 / total_sum) * 100, 1)
-            pct_r2 = round((total_r2 / total_sum) * 100, 1)
-            pct_r3 = round((total_r3 / total_sum) * 100, 1)
+            pct_sphere = round((t_sphere / total_sum) * 100, 1)
+            pct_open = round((t_open / total_sum) * 100, 1)
+            pct_square = round((t_square / total_sum) * 100, 1)
+            pct_vector = round((t_vector / total_sum) * 100, 1)
         else:
-            pct_r1 = pct_r2 = pct_r3 = 0.0
+            pct_sphere = pct_open = pct_square = pct_vector = 0.0
 
-        # Базовий коефіцієнт шлюзів K
-        k_exchange = total_r3 / (total_r1 + 1)
+        # --- НОВА МАТЕМАТИЧНА МОДЕЛЬ НУЛ ---
+        # 1. Коефіцієнт шлюзів ( K ) враховує як відкриті кола, так і векторні прориви відносно каркаса
+        k_exchange = (t_open + t_vector) / (t_square + 1)
 
-        # --- МАТЕМАТИЧНИЙ АПАРАТ ГЛАВИ III ---
-        # 1. Мнима складова сенсу i (корінь із відношення полярностей)
+        # 2. Мнимий оператор сенсу i
         i_sense = round(math.sqrt(k_exchange), 3)
 
-        # 2. Матеріальна цегла R4 = (i)^2
+        # 3. Матеріальна цегла / осад R4 = i^2
         r4_matter = round(k_exchange, 2)
 
-        # 3. Вимога до компенсатора свідомості R5 = i * S^(-1)
-        # Де ентропія S виражається відношенням R3 до загального каркаса R2
-        entropy_s = (total_r3 / (total_r2 + 1)) if total_r2 > 0 else 1.0
+        # 4. Необхідна напруга свідомості R5 (компенсація ентропії каркаса)
+        entropy_s = (t_square / (t_sphere + t_open + 1)) if t_sphere > 0 else 1.0
         r5_compensation = round(i_sense / (entropy_s + 1e-5), 3)
+
+        # 5. Реліктовий енергетичний вплив тексту R1_impact
+        r1_impact = round((t_open * t_vector) / (t_square + 0.001), 2)
 
         return {
             "total_chars": alpha_chars_count,
-            "total_vector": (total_r1, total_r2, total_r3),
-            "percentages": (pct_r1, pct_r2, pct_r3),
+            "vector": (t_sphere, t_open, t_square, t_vector),
+            "percentages": (pct_sphere, pct_open, pct_square, pct_vector),
             "k_exchange": round(k_exchange, 2),
             "i_sense": i_sense,
             "r4_matter": r4_matter,
-            "r5_compensation": r5_compensation
+            "r5_compensation": r5_compensation,
+            "r1_impact": r1_impact
         }
 
 dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
-    await message.answer("Вітаю! NUL Analytical Bot активовано (Синтез Глави III). Надішліть текст для розрахунку мнимого сенсу та компенсації R5.")
+    await message.answer("Вітаю! NUL Relic Spectral Analyzer активовано. Надішліть текст для розрахунку геометрії шлюзів, мнимого сенсу та енергетичного впливу R1.")
 
 @dp.message()
 async def message_handler(message: types.Message):
@@ -112,38 +118,43 @@ async def message_handler(message: types.Message):
         await message.answer("Текст не містить розпізнаних символів абетки чи цифр.")
         return
 
-    r1_sum, r2_sum, r3_sum = summary['total_vector']
-    p1, p2, p3 = summary['percentages']
+    s_sum, o_sum, sq_sum, v_sum = summary['vector']
+    p1, p2, p3, p4 = summary['percentages']
     k_ex = summary['k_exchange']
     i_s = summary['i_sense']
     r4_m = summary['r4_matter']
     r5_c = summary['r5_compensation']
+    r1_imp = summary['r1_impact']
 
-    # Логіка станів Абсолюту
-    if k_ex > 1.0:
-        state_desc = "Відкритий контур / Вимагає залучення R5-свідомості для замикання"
+    if r1_imp > 2.5:
+        status = "Живий трансцендентний вихор / Висока провідність істини"
+    elif r1_imp >= 1.0:
+        status = "Відігранований кристал / Ідеальний баланс каркаса та шлюзів"
     else:
-        state_desc = "Герметичний моноліт / Не потребує зовнішнього компенсатора"
+        status = "Мертвий ентропійний шар / Залізобетонна догма"
 
-    response = f"⚡ **СИНТЕЗ NUL (ГЛАВА III)** ⚡\n\n"
+    response = f"⚡ **СПЕКТРАЛЬНИЙ АНАЛІЗ NUL** ⚡\n\n"
     response += f"📊 **Опрацьовано знаків:** {summary['total_chars']}\n\n"
     
-    response += f"--- **ВЕКТОРНИЙ ПРОФІЛЬ (R1-R3)** ---\n"
-    response += f"• **Сума (R1, R2, R3):** ({r1_sum}, {r2_sum}, {r3_sum})\n"
-    response += f"• **Профіль:** R1={p1}% | R2={p2}% | R3={p3}%\n"
+    response += f"--- **ТОПОЛОГІЧНИЙ ПРОФІЛЬ ФОРМИ** ---\n"
+    response += f"• **Сферичні контури (кола):** {s_sum} ({p1}%)\n"
+    response += f"• **Розірвані шлюзи (портали):** {o_sum} ({p2}%)\n"
+    response += f"• **Ортогональні каркаси (прямі):** {sq_sum} ({p3}%)\n"
+    response += f"• **Векторні прориви (кути):** {v_sum} ({p4}%)\n"
     response += f"• **Коефіцієнт шлюзів (K):** {k_ex}\n\n"
     
-    response += f"--- **МАТЕМАТИКА АБСОЛЮТУ (i, R4, R5)** ---\n"
+    response += f"--- **МАТЕМАТИКА АБСОЛЮТУ** ---\n"
     response += f"• **Мнимий оператор сенсу (i):** {i_s} i\n"
-    response += f"• **Матеріальний осад (R4 = i²):** {r4_m}\n"
-    response += f"• **Необхідна сила свідомості (R5):** {r5_c}\n\n"
+    response += f"• **Матеріальний осад (R4 = i^2):** {r4_m}\n"
+    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n"
+    response += f"• **Енергетичний вплив (R1_impact):** {r1_imp}\n\n"
     
-    response += f"• **Статус:** _{state_desc}_"
+    response += f"• **Статус структури:** _{status}_"
 
     await message.answer(response, parse_mode="Markdown")
 
 async def handle(request):
-    return web.Response(text="NUL Bot is active and running!")
+    return web.Response(text="NUL Relic Analyzer Bot is active and running!")
 
 async def start_web_server():
     app = web.Application()
