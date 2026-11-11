@@ -130,21 +130,21 @@ async def message_handler(message: types.Message):
     i_s = summary['i_sense']
     r4_m = summary['r4_matter']
     r5_c = summary['r5_compensation']
-    r1_imp = summary['r1_impact']
+    r1_imp = summary['r1_impact']  # Ось це ключова змінна енергетичного впливу
 
-    # Адаптивна матриця статусу за законами НУЛ
-    if r1_impact > 80 and i_sense > 0.9 and r5_compensation > 0.15:
+    # Адаптивна матриця статусу за законами НУЛ (використовуємо правильні назви змінних)
+    if r1_imp > 80 and i_s > 0.9 and r5_c > 0.15:
         status = "Живий трансцендентний вихор / Висока провідність істини"
-    elif r1_impact >= 30 and i_sense > 0.8:
+    elif r1_imp >= 30 and i_s > 0.8:
         status = "Динамічний інформаційний потік / Спрямована напруга"
-    elif r1_impact >= 10:
+    elif r1_imp >= 10:
         status = "Відігранований кристал / Ідеальний баланс каркаса та шлюзів"
-    elif r1_impact == 0.0 or sq_sum > (s_sum + o_sum + v_sum) * 2:
+    elif r1_imp == 0.0 or sq_sum > (s_sum + o_sum + v_sum) * 2:
         status = "Мертвий ентропійний шар / Залізобетонна догма або Шум"
     else:
         status = "Статична буферна зона / Перехідний стан"
 
-    # Формуємо звичайний текст без ризику помилок парсерa Markdown
+    # Формуємо звичайний текст звіту
     response = "[ СПЕКТРАЛЬНИЙ АНАЛІЗ NUL ]\n\n"
     response += f"Опрацьовано знаків: {summary['total_chars']}\n\n"
     response += "ТОПОЛОГІЧНИЙ ПРОФІЛЬ ФОРМИ:\n"
@@ -160,7 +160,6 @@ async def message_handler(message: types.Message):
     response += f"- Енергетичний вплив (R1_impact): {r1_imp}\n\n"
     response += f"Статус структури: {status}"
 
-    # Відправляємо без parse_mode, щоб уникнути будь-яких помилок парсингу
     await message.answer(response)
 
 async def handle(request):
