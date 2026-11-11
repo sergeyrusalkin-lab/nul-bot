@@ -5,16 +5,19 @@ import os
 import re
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
 TOKEN = os.getenv("BOT_TOKEN")
+# На Render ти можеш задати WEBHOOK_URL у змінних середовища або прописати свою адресу напряму:
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://nul-bot.onrender.com/webhook")
+WEBHOOK_PATH = "/webhook"
 
 class NULAbsoluteAnalyzer:
     def __init__(self, text: str):
         self.raw_text = text.upper()
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9\s]', '', self.raw_text)
         
-        # Топологічна матриця НУЛ: (Сфера/R1_контур, Розірваний шлюз, Ортогональний каркас R2, Векторний прорив R3)
         self.CYRILLIC_MATRIX = {
             'А': (0, 0, 1, 3), 'Б': (1, 1, 1, 1), 'В': (2, 0, 2, 0), 'Г': (0, 0, 2, 1),
             'Ґ': (0, 0, 2, 2), 'Д': (0, 0, 3, 2), 'Е': (0, 0, 4, 2), 'Є': (1, 1, 1, 1),
@@ -46,7 +49,6 @@ class NULAbsoluteAnalyzer:
         for char in self.clean_text:
             if char.isspace():
                 continue
-            
             if char in self.CYRILLIC_MATRIX:
                 vec = self.CYRILLIC_MATRIX[char]
             elif char in self.LATIN_MATRIX:
@@ -63,7 +65,6 @@ class NULAbsoluteAnalyzer:
             alpha_chars_count += 1
 
         total_sum = t_sphere + t_open + t_square + t_vector
-        
         if total_sum > 0:
             pct_sphere = round((t_sphere / total_sum) * 100, 1)
             pct_open = round((t_open / total_sum) * 100, 1)
@@ -72,21 +73,11 @@ class NULAbsoluteAnalyzer:
         else:
             pct_sphere = pct_open = pct_square = pct_vector = 0.0
 
-        # --- НОВА МАТЕМАТИЧНА МОДЕЛЬ НУЛ ---
-        # 1. Коефіцієнт шлюзів ( K ) враховує як відкриті кола, так і векторні прориви відносно каркаса
         k_exchange = (t_open + t_vector) / (t_square + 1)
-
-        # 2. Мнимий оператор сенсу i
         i_sense = round(math.sqrt(k_exchange), 3)
-
-        # 3. Матеріальна цегла / осад R4 = i^2
         r4_matter = round(k_exchange, 2)
-
-        # 4. Необхідна напруга свідомості R5 (компенсація ентропії каркаса)
         entropy_s = (t_square / (t_sphere + t_open + 1)) if t_sphere > 0 else 1.0
         r5_compensation = round(i_sense / (entropy_s + 1e-5), 3)
-
-        # 5. Реліктовий енергетичний вплив тексту R1_impact
         r1_impact = round((t_open * t_vector) / (t_square + 0.001), 2)
 
         return {
@@ -104,7 +95,7 @@ dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
-    await message.answer("Вітаю! NUL Relic Spectral Analyzer активовано. Надішліть текст для розрахунку геометрії шлюзів, мнимого сенсу та енергетичного впливу R1.")
+    await message.answer("Вітаю! NUL Relic Spectral Analyzer (Webhook) активовано. Надішліть текст для розрахунку геометрії шлюзів.")
 
 @dp.message()
 async def message_handler(message: types.Message):
@@ -135,42 +126,53 @@ async def message_handler(message: types.Message):
 
     response = f"⚡ **СПЕКТРАЛЬНИЙ АНАЛІЗ NUL** ⚡\n\n"
     response += f"📊 **Опрацьовано знаків:** {summary['total_chars']}\n\n"
-    
     response += f"--- **ТОПОЛОГІЧНИЙ ПРОФІЛЬ ФОРМИ** ---\n"
     response += f"• **Сферичні контури (кола):** {s_sum} ({p1}%)\n"
     response += f"• **Розірвані шлюзи (портали):** {o_sum} ({p2}%)\n"
     response += f"• **Ортогональні каркаси (прямі):** {sq_sum} ({p3}%)\n"
     response += f"• **Векторні прориви (кути):** {v_sum} ({p4}%)\n"
     response += f"• **Коефіцієнт шлюзів (K):** {k_ex}\n\n"
-    
     response += f"--- **МАТЕМАТИКА АБСОЛЮТУ** ---\n"
     response += f"• **Мнимий оператор сенсу (i):** {i_s} i\n"
     response += f"• **Матеріальний осад (R4 = i^2):** {r4_m}\n"
-    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n"
+    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n`"
     response += f"• **Енергетичний вплив (R1_impact):** {r1_imp}\n\n"
-    
     response += f"• **Статус структури:** _{status}_"
 
     await message.answer(response, parse_mode="Markdown")
 
-async def handle(request):
-    return web.Response(text="NUL Relic Analyzer Bot is active and running!")
-
-async def start_web_server():
-    app = web.Application()
-    app.add_routes([web.get('/', handle)])
-    runner = web.AppRunner(app)
-    await runner.setup()
-    port = int(os.environ.get("PORT", 10000))
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    print(f"Вебсервер запущено на порту {port}")
+async def on_startup(bot: Bot):
+    # Встановлюємо вебхук при запуску додатку
+    await bot.set_webhook(f"{WEBHOOK_URL}{WEBHOOK_PATH}")
 
 async def main():
     bot = Bot(token=TOKEN)
-    await start_web_server()
-    print("Бот запущено і готовий до роботи...")
-    await dp.start_polling(bot)
+    
+    app = web.Application()
+    
+    # Реєструємо обробник вебхуків від aiogram
+    webhook_requests_handler = SimpleRequestHandler(
+        dispatcher=dp,
+        bot=bot,
+    )
+    webhook_requests_handler.register(app, path=WEBHOOK_PATH)
+    
+    # Додаємо базовий роут перевірки життя серву
+    app.router.add_get("/", lambda r: web.Response(text="NUL Webhook Bot is active!"))
+    
+    setup_application(app, dp, bot=bot)
+    
+    dp.startup.register(on_startup)
+    
+    port = int(os.environ.get("PORT", 10000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Вебхук-сервер запущено на порту {port}")
+    
+    # Тримаємо сервер активним
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
