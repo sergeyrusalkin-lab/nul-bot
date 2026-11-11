@@ -9,8 +9,8 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 TOKEN = os.getenv("BOT_TOKEN")
-# На Render ти можеш задати WEBHOOK_URL у змінних середовища або прописати свою адресу напряму:
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://nul-bot.onrender.com/webhook")
+# Базова адреса твого сервісу на Render (без дублювання /webhook)
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://nul-bot.onrender.com")
 WEBHOOK_PATH = "/webhook"
 
 class NULAbsoluteAnalyzer:
@@ -18,6 +18,7 @@ class NULAbsoluteAnalyzer:
         self.raw_text = text.upper()
         self.clean_text = re.sub(r'[^А-ЯІЇЄҐA-Z0-9\s]', '', self.raw_text)
         
+        # Топологічна матриця НУЛ: (Сфера / R1_контур, Розірваний шлюз, Ортогональний каркас R2, Векторний прорив R3)
         self.CYRILLIC_MATRIX = {
             'А': (0, 0, 1, 3), 'Б': (1, 1, 1, 1), 'В': (2, 0, 2, 0), 'Г': (0, 0, 2, 1),
             'Ґ': (0, 0, 2, 2), 'Д': (0, 0, 3, 2), 'Е': (0, 0, 4, 2), 'Є': (1, 1, 1, 1),
@@ -73,6 +74,7 @@ class NULAbsoluteAnalyzer:
         else:
             pct_sphere = pct_open = pct_square = pct_vector = 0.0
 
+        # Математичний апарат НУЛ
         k_exchange = (t_open + t_vector) / (t_square + 1)
         i_sense = round(math.sqrt(k_exchange), 3)
         r4_matter = round(k_exchange, 2)
@@ -95,7 +97,7 @@ dp = Dispatcher()
 
 @dp.message(Command("start"))
 async def start_handler(message: types.Message):
-    await message.answer("Вітаю! NUL Relic Spectral Analyzer (Webhook) активовано. Надішліть текст для розрахунку геометрії шлюзів.")
+    await message.answer("Вітаю! NUL Relic Spectral Analyzer активовано. Надішліть текст для розрахунку геометрії шлюзів.")
 
 @dp.message()
 async def message_handler(message: types.Message):
@@ -135,33 +137,31 @@ async def message_handler(message: types.Message):
     response += f"--- **МАТЕМАТИКА АБСОЛЮТУ** ---\n"
     response += f"• **Мнимий оператор сенсу (i):** {i_s} i\n"
     response += f"• **Матеріальний осад (R4 = i^2):** {r4_m}\n"
-    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n`"
+    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n"
     response += f"• **Енергетичний вплив (R1_impact):** {r1_imp}\n\n"
     response += f"• **Статус структури:** _{status}_"
 
     await message.answer(response, parse_mode="Markdown")
 
 async def on_startup(bot: Bot):
-    # Встановлюємо вебхук при запуску додатку
-    await bot.set_webhook(f"{WEBHOOK_URL}{WEBHOOK_PATH}")
+    # Коректне встановлення вебхука без задвоєння
+    webhook_url = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
+    await bot.set_webhook(webhook_url)
 
 async def main():
     bot = Bot(token=TOKEN)
     
     app = web.Application()
     
-    # Реєструємо обробник вебхуків від aiogram
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
     )
     webhook_requests_handler.register(app, path=WEBHOOK_PATH)
     
-    # Додаємо базовий роут перевірки життя серву
     app.router.add_get("/", lambda r: web.Response(text="NUL Webhook Bot is active!"))
     
     setup_application(app, dp, bot=bot)
-    
     dp.startup.register(on_startup)
     
     port = int(os.environ.get("PORT", 10000))
@@ -171,7 +171,6 @@ async def main():
     await site.start()
     print(f"Вебхук-сервер запущено на порту {port}")
     
-    # Тримаємо сервер активним
     await asyncio.Event().wait()
 
 if __name__ == "__main__":
