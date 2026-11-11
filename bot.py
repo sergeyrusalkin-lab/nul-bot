@@ -186,6 +186,8 @@ async def main():
         print(f"Попередження при видаленні вебхука: {e}")
 
     await start_web_server()
+    # Невелика пауза для звільнення попереднього з'єднання на сервері Телеграму
+    await asyncio.sleep(3)
     print("Бот запущено і готовий до роботи (Polling режим)...")
     await dp.start_polling(bot)
 
