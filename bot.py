@@ -70,13 +70,30 @@ class NULAbsoluteAnalyzer:
         else:
             pct_sphere = pct_open = pct_square = pct_vector = 0.0
 
-        # Математичний апарат НУЛ
+        # СУВОРЕ ДОТРИМАННЯ МАТЕМАТИКИ АБСОЛЮТУ (Глава 3):
+        # 1. Коефіцієнт обміну / відношення сил
         k_exchange = (t_open + t_vector) / (t_square + 1)
-        i_sense = round(math.sqrt(k_exchange), 3)
-        r4_matter = round(k_exchange, 2)
-        entropy_s = (t_square / (t_sphere + t_open + 1)) if t_sphere > 0 else 1.0
+        
+        # 2. Мнимий оператор сенсу (i) як корінь із відношення (Глава 3.4-3.5)
+        i_sense = round(math.sqrt(max(0.0, k_exchange)), 3)
+        
+        # 3. Матеріальний осад (R4) як квадрат мнимого потенціалу (Глава 3.6: R4 = i^2)
+        r4_matter = round(i_sense ** 2, 2)
+        
+        # 4. Ентропія (S) як залишок процесу (Глава 3.2)
+        entropy_s = (t_square + t_vector) / (t_sphere + t_open + 1) if (t_sphere + t_open) > 0 else 10.0
+        
+        # 5. Компенсаторна напруга свідомості (R5 = i * S^(-1)) за Главою 3.2
         r5_compensation = round(i_sense / (entropy_s + 1e-5), 3)
-        r1_impact = round((t_open * t_vector) / (t_square + 0.001), 2)
+        
+        # 6. ЗАХИСТ ВІД ХАОСУ (NULL-компенсація): 
+        # Якщо немає жодної сферичної опори (t_sphere == 0), структура не має нуль-контейнера в Абсолюті.
+        # Це нескомпенсований інформаційний шум (кракозябри), енергетичний вплив обнуляється.
+        if t_sphere == 0 and t_open < 3:
+            r1_impact = 0.0
+        else:
+            # Енергетичний вплив з урахуванням наявності сферичного контейнера
+            r1_impact = round((t_open * t_vector * max(1, t_sphere)) / (t_square + 1.0), 2)
 
         return {
             "total_chars": alpha_chars_count,
@@ -115,15 +132,15 @@ async def message_handler(message: types.Message):
     r5_c = summary['r5_compensation']
     r1_imp = summary['r1_impact']
 
-    # Адаптивна матриця визначення статусу на основі мнимого оператора (i), напруги (R5) та впливу (r1_imp)
-    if r1_imp > 100 and i_s > 0.9 and r5_compensation > 0.2:
+    # Адаптивна матриця статусу за законами НУЛ
+    if r1_impact > 80 and i_sense > 0.9 and r5_compensation > 0.15:
         status = "Живий трансцендентний вихор / Висока провідність істини"
-    elif r1_imp >= 50 and i_s > 0.85:
+    elif r1_impact >= 30 and i_sense > 0.8:
         status = "Динамічний інформаційний потік / Спрямована напруга"
-    elif r1_imp >= 20 and k_ex >= 0.7:
+    elif r1_impact >= 10:
         status = "Відігранований кристал / Ідеальний баланс каркаса та шлюзів"
-    elif sq_sum > (s_sum + o_sum + v_sum) * 1.5 or r1_imp < 15:
-        status = "Мертвий ентропійний шар / Залізобетонна догма"
+    elif r1_impact == 0.0 or sq_sum > (s_sum + o_sum + v_sum) * 2:
+        status = "Мертвий ентропійний шар / Залізобетонна догма або Шум"
     else:
         status = "Статична буферна зона / Перехідний стан"
 
