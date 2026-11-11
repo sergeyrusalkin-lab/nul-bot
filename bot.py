@@ -122,22 +122,24 @@ async def message_handler(message: types.Message):
     else:
         status = "Мертвий ентропійний шар / Залізобетонна догма"
 
-    response = f"⚡ **СПЕКТРАЛЬНИЙ АНАЛІЗ NUL** ⚡\n\n"
-    response += f"📊 **Опрацьовано знаків:** {summary['total_chars']}\n\n"
-    response += f"--- **ТОПОЛОГІЧНИЙ ПРОФІЛЬ ФОРМИ** ---\n"
-    response += f"• **Сферичні контури (кола):** {s_sum} ({p1}%)\n"
-    response += f"• **Розірвані шлюзи (портали):** {o_sum} ({p2}%)\n"
-    response += f"• **Ортогональні каркаси (прямі):** {sq_sum} ({p3}%)\n"
-    response += f"• **Векторні прориви (кути):** {v_sum} ({p4}%)\n"
-    response += f"• **Коефіцієнт шлюзів (K):** {k_ex}\n\n"
-    response += f"--- **МАТЕМАТИКА АБСОЛЮТУ** ---\n"
-    response += f"• **Мнимий оператор сенсу (i):** {i_s} i\n"
-    response += f"• **Матеріальний осад (R4 = i^2):** {r4_m}\n"
-    response += f"• **Необхідна напруга свідомості (R5):** {r5_c}\n"
-    response += f"• **Енергетичний вплив (R1_impact):** {r1_imp}\n\n"
-    response += f"• **Статус структури:** _{status}_"
+    # Формуємо звичайний текст без ризику помилок парсерa Markdown
+    response = "[ СПЕКТРАЛЬНИЙ АНАЛІЗ NUL ]\n\n"
+    response += f"Опрацьовано знаків: {summary['total_chars']}\n\n"
+    response += "ТОПОЛОГІЧНИЙ ПРОФІЛЬ ФОРМИ:\n"
+    response += f"- Сферичні контури (кола): {s_sum} ({p1}%)\n"
+    response += f"- Розірвані шлюзи (портали): {o_sum} ({p2}%)\n"
+    response += f"- Ортогональні каркаси (прямі): {sq_sum} ({p3}%)\n"
+    response += f"- Векторні прориви (кути): {v_sum} ({p4}%)\n"
+    response += f"- Коефіцієнт шлюзів (K): {k_ex}\n\n"
+    response += "МАТЕМАТИКА АБСОЛЮТУ:\n"
+    response += f"- Мнимий оператор сенсу (i): {i_s} i\n"
+    response += f"- Матеріальний осад (R4 = i^2): {r4_m}\n"
+    response += f"- Необхідна напруга свідомості (R5): {r5_c}\n"
+    response += f"- Енергетичний вплив (R1_impact): {r1_imp}\n\n"
+    response += f"Статус структури: {status}"
 
-    await message.answer(response, parse_mode="Markdown")
+    # Відправляємо без parse_mode, щоб уникнути будь-яких помилок парсингу
+    await message.answer(response)
 
 async def handle(request):
     return web.Response(text="NUL Bot is active and running!")
@@ -155,7 +157,6 @@ async def start_web_server():
 async def main():
     bot = Bot(token=TOKEN)
     
-    # ПРИМУСОВО скидаємо старий вебхук, щоб уникнути TelegramConflictError
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         print("Старий вебхук успішно очищено.")
