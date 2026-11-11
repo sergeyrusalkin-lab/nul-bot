@@ -154,8 +154,16 @@ async def start_web_server():
 
 async def main():
     bot = Bot(token=TOKEN)
+    
+    # ПРИМУСОВО скидаємо старий вебхук, щоб уникнути TelegramConflictError
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+        print("Старий вебхук успішно очищено.")
+    except Exception as e:
+        print(f"Попередження при видаленні вебхука: {e}")
+
     await start_web_server()
-    print("Бот запущено і готовий до роботи...")
+    print("Бот запущено і готовий до роботи (Polling режим)...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
