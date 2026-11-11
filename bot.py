@@ -186,11 +186,11 @@ async def main():
         print(f"Попередження при видаленні вебхука: {e}")
 
     await start_web_server()
-    # Невелика пауза для звільнення попереднього з'єднання на сервері Телеграму
-    await asyncio.sleep(3)
+    
     print("Бот запущено і готовий до роботи (Polling режим)...")
-    await dp.start_polling(bot)
-
+    # Передаємо drop_pending_updates у сам polling, щоб aiogram сам ігнорував старі конфліктні запити
+    await dp.start_polling(bot, drop_pending_updates=True)
+    
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
